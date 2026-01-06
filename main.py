@@ -12,13 +12,14 @@ class Game:
         
     def run(self):
         while True:
-            for event in pygame.event.get():
+            events = pygame.event.get()
+            for event in events:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
                     
             dt = self.clock.tick() / 1000
-            self.level.run(dt)
+            self.level.run(dt, events)
             pygame.display.update()
             
 if __name__ == '__main__':
