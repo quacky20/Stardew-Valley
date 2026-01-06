@@ -1,11 +1,13 @@
 from settings import *
 from player import Player
 from overlay import Overlay
-from sprites import Generic, Water, WildFlower, Trees, Interaction
+from sprites import Generic, Water, WildFlower, Trees, Interaction, Particle
 from pytmx.util_pygame import load_pygame
 from support import *
 from transition import Transition
 from soil import SoilLayer
+from sky import Rain, Sky
+from random import randint
 
 class Level:
     def __init__(self):
@@ -17,10 +19,16 @@ class Level:
         self.tree_sprites = pygame.sprite.Group()
         self.interaction_sprites = pygame.sprite.Group()
     
-        self.soil_layer = SoilLayer(self.all_sprites)
+        self.soil_layer = SoilLayer(self.all_sprites, self.collision_sprites)
         self.setup()
         self.overlay = Overlay(self.player)
         self.transition = Transition(self.reset, self.player)
+        
+        # sky
+        self.rain = Rain(self.all_sprites)
+        self.raining = randint(0, 10) < 7
+        self.soil_layer.raining = self.raining
+        self.sky = Sky()
     
     def setup(self):
         tmx_data = load_pygame(join('data', 'map.tmx'))
@@ -80,24 +88,54 @@ class Level:
         self.player.item_inventory[item] += 1
     
     def reset(self):
+        # plants
+        self.soil_layer.update_plants()
+        
+        # soil
+        self.soil_layer.remove_water()
+        self.raining = randint(0, 10) < 3
+        self.soil_layer.raining = self.raining
+        if self.raining:
+            self.soil_layer.water_all()
+        
         # apples
-        for tree in self.tree_sprites():
+        for tree in self.tree_sprites:
             for apple in tree.apple_sprites.sprites():
                 apple.kill()
             tree.create_fruit()
             
-        # soil
-        self.soil_layer.remove_water()
+        # sky
+        self.sky.start_color = [255, 255, 255]
+    
+    def plant_collision(self):
+        if self.soil_layer.plant_sprites:
+            for plant in self.soil_layer.plant_sprites.sprites():
+                if plant.harvestable and plant.rect.colliderect(self.player.hitbox):
+                    self.player_add(plant.plant_type)
+                    plant.kill()
+                    Particle(self.all_sprites, plant.rect.topleft, plant.image, LAYERS['main'])
+                    self.soil_layer.grid[int(plant.rect.centery // TILE_SIZE)][int(plant.rect.centerx // TILE_SIZE)].remove('P')
     
     def run(self, dt, events):
         self.display_surface.fill('black')
         self.all_sprites.draw(self.player)
         self.all_sprites.update(dt, events)
+        self.plant_collision()
         
+        # rain
+        if self.raining:
+            self.rain.update()
+            
+        # day-night cycle
+        self.sky.display(dt)
+        
+        # transition
         self.overlay.display()
         
         if self.player.sleep:
             self.transition.play()
+        
+        # print(self.player.item_inventory)
         
 class CameraGroup(pygame.sprite.Group):
     def __init__(self, ):

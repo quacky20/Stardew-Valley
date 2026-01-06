@@ -7,8 +7,14 @@ class Game:
         self.display_surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption('Stardew Valley')
         self.clock = pygame.Clock()
+        # # Display loading message
+        # font = pygame.font.Font(None, 36)
+        # text = font.render('Loading...', True, (255, 255, 255))
+        # text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+        # self.display_surface.fill((0, 0, 0))
+        # self.display_surface.blit(text, text_rect)
+        # pygame.display.update()
         self.level = Level()
-        
         
     def run(self):
         while True:
