@@ -62,7 +62,6 @@ class Trees(Generic):
         self.health = 5
         self.alive = True
         self.stump_surface = pygame.image.load(join('graphics', 'stumps', f'{'small' if name == 'Small' else 'large'}.png')).convert_alpha()
-        self.invul_timer = Timer(200)
         
         # apple
         self.apple_surf = pygame.image.load(join('graphics', 'fruit', 'apple.png'))
@@ -72,8 +71,13 @@ class Trees(Generic):
         
         self.player_add = player_add
         
+        # sounds
+        self.axe_sound = pygame.mixer.Sound(join('audio', 'axe.mp3'))
+        
     def damage(self):
         self.health -= 1
+        
+        self.axe_sound.play()
         
         if (len(self.apple_sprites.sprites()) > 0):
             random_apple = choice(self.apple_sprites.sprites())

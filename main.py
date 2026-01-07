@@ -4,7 +4,7 @@ from level import Level
 class Game:
     def __init__(self):
         pygame.init()
-        self.display_surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.display_surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
         pygame.display.set_caption('Stardew Valley')
         self.clock = pygame.Clock()
         # # Display loading message
@@ -23,6 +23,11 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                    
+                if event.type == pygame.VIDEORESIZE:
+                    SCREEN_WIDTH = event.w
+                    SCREEN_HEIGHT = event.h
+                    self.display_surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
                     
             dt = self.clock.tick() / 1000
             self.level.run(dt, events)

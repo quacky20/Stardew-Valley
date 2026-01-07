@@ -8,6 +8,7 @@ from transition import Transition
 from soil import SoilLayer
 from sky import Rain, Sky
 from random import randint
+from menu import Menu
 
 class Level:
     def __init__(self):
@@ -26,10 +27,21 @@ class Level:
         
         # sky
         self.rain = Rain(self.all_sprites)
-        self.raining = randint(0, 10) < 7
+        self.raining = randint(0, 10) < 3
         self.soil_layer.raining = self.raining
         self.sky = Sky()
-    
+        
+        # shop
+        self.shop_active = False
+        self.menu = Menu(self.player, self.toggle_shop)
+        
+        # sound
+        self.pickup = pygame.mixer.Sound(join('audio', 'success.wav'))
+        self.pickup.set_volume(0.3)
+        self.music = pygame.mixer.Sound(join('audio', 'music.mp3'))
+        self.music.set_volume(0.3)
+        self.music.play(loops = -1)
+            
     def setup(self):
         tmx_data = load_pygame(join('data', 'map.tmx'))
         
@@ -79,13 +91,20 @@ class Level:
         # player
         for obj in tmx_data.get_layer_by_name('Player'):
             if obj.name == 'Start':
-                self.player = Player(self.all_sprites, (obj.x, obj.y), self.collision_sprites, self.tree_sprites, self.interaction_sprites, self.soil_layer)
+                self.player = Player(self.all_sprites, (obj.x, obj.y), self.collision_sprites, self.tree_sprites, self.interaction_sprites, self.soil_layer, self.toggle_shop)
                 
             if obj.name == 'Bed':
+                Interaction(self.interaction_sprites, (obj.x, obj.y), (obj.width, obj.height), obj.name)
+                
+            if obj.name == 'Trader':
                 Interaction(self.interaction_sprites, (obj.x, obj.y), (obj.width, obj.height), obj.name)
     
     def player_add(self, item):
         self.player.item_inventory[item] += 1
+        self.pickup.play()
+    
+    def toggle_shop(self):
+        self.shop_active = not self.shop_active
     
     def reset(self):
         # plants
@@ -117,13 +136,19 @@ class Level:
                     self.soil_layer.grid[int(plant.rect.centery // TILE_SIZE)][int(plant.rect.centerx // TILE_SIZE)].remove('P')
     
     def run(self, dt, events):
+        # drawing
         self.display_surface.fill('black')
         self.all_sprites.draw(self.player)
-        self.all_sprites.update(dt, events)
-        self.plant_collision()
+        
+        # updates
+        if self.shop_active:
+            self.menu.update()
+        else:
+            self.all_sprites.update(dt, events)
+            self.plant_collision()
         
         # rain
-        if self.raining:
+        if self.raining and not self.shop_active:
             self.rain.update()
             
         # day-night cycle
@@ -135,7 +160,7 @@ class Level:
         if self.player.sleep:
             self.transition.play()
         
-        # print(self.player.item_inventory)
+        # print(self.shop_active)
         
 class CameraGroup(pygame.sprite.Group):
     def __init__(self, ):

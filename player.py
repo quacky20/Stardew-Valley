@@ -3,7 +3,7 @@ from support import *
 from gametimer import Timer
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, groups, pos, collision_sprites, tree_sprites, interaction_sprites, soil_layer):
+    def __init__(self, groups, pos, collision_sprites, tree_sprites, interaction_sprites, soil_layer, toggle_shop):
         super().__init__(groups)
         
         self.import_assets()
@@ -44,17 +44,27 @@ class Player(pygame.sprite.Sprite):
         
         # inventory
         self.item_inventory = {
-            'wood': 0,
-            'apple': 0,
-            'corn': 0,
-            'tomato': 0
+            'wood': 20,
+            'apple': 20,
+            'corn': 20,
+            'tomato': 20
         }
+        self.seed_inventory = {
+            'corn': 5,
+            'tomato': 5
+        }
+        self.money = 200
         
         # interactions
         self.tree_sprites = tree_sprites
         self.interaction_sprites = interaction_sprites
         self.sleep = False
         self.soil_layer = soil_layer
+        self.toggle_shop = toggle_shop
+        
+        # sound
+        self.watering_sound = pygame.mixer.Sound(join('audio', 'water.mp3'))
+        self.watering_sound.set_volume(0.2)
         
     def use_tool(self):
         if self.selected_tool == 'hoe':
@@ -68,12 +78,15 @@ class Player(pygame.sprite.Sprite):
         
         if self.selected_tool == 'water':
             self.soil_layer.water(self.target_pos)
+            self.watering_sound.play()
     
     def get_target_pos(self):
         self.target_pos = self.rect.center + PLAYER_TOOL_OFFSET[self.status.split('_')[0]]
     
     def use_seed(self):
-        self.soil_layer.plant_seed(self.target_pos, self.selected_seed)
+        if self.seed_inventory[self.selected_seed] > 0:
+            self.soil_layer.plant_seed(self.target_pos, self.selected_seed)
+            self.seed_inventory[self.selected_seed] -= 1
         
     def import_assets(self):
         self.animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [], 'left_idle': [], 'right_idle': [], 'up_hoe': [], 'down_hoe': [], 'left_hoe': [], 'right_hoe': [], 'up_axe': [], 'down_axe': [], 'left_axe': [], 'right_axe': [], 'up_water': [], 'down_water': [], 'left_water': [], 'right_water': []}
@@ -141,12 +154,12 @@ class Player(pygame.sprite.Sprite):
                 self.seed_index += 1
                 self.selected_seed = self.seeds[self.seed_index % len(self.seeds)]
                 
-            # sleep
-            if keys[pygame.K_RETURN]:
+            # interact
+            if keys[pygame.K_TAB]:
                 collided_interaction_sprite = pygame.sprite.spritecollide(self, self.interaction_sprites, False)
                 if collided_interaction_sprite:
-                    if collided_interaction_sprite[0].name == 'trader':
-                        pass
+                    if collided_interaction_sprite[0].name == 'Trader':
+                        self.toggle_shop()
                     else:
                         self.status = 'left_idle'
                         self.sleep = True
