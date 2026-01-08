@@ -11,29 +11,31 @@ from random import randint
 from menu import Menu
 
 class Level:
-    def __init__(self):
+    def __init__(self, screen_width, screen_height):
         self.display_surface = pygame.display.get_surface()
+        self.screen_width = screen_width
+        self.screen_height = screen_height
         
         # sprite groups
-        self.all_sprites = CameraGroup()
+        self.all_sprites = CameraGroup(self.screen_width, self.screen_height)
         self.collision_sprites = pygame.sprite.Group()
         self.tree_sprites = pygame.sprite.Group()
         self.interaction_sprites = pygame.sprite.Group()
     
         self.soil_layer = SoilLayer(self.all_sprites, self.collision_sprites)
         self.setup()
-        self.overlay = Overlay(self.player)
-        self.transition = Transition(self.reset, self.player)
+        self.overlay = Overlay(self.player, self.screen_width, self.screen_height)
+        self.transition = Transition(self.reset, self.player, self.screen_width, self.screen_height)
         
         # sky
         self.rain = Rain(self.all_sprites)
         self.raining = randint(0, 10) < 3
         self.soil_layer.raining = self.raining
-        self.sky = Sky()
+        self.sky = Sky(self.screen_width, self.screen_height)
         
         # shop
         self.shop_active = False
-        self.menu = Menu(self.player, self.toggle_shop)
+        self.menu = Menu(self.player, self.toggle_shop, self.screen_width, self.screen_height)
         
         # sound
         self.pickup = pygame.mixer.Sound(join('audio', 'success.wav'))
@@ -135,6 +137,26 @@ class Level:
                     Particle(self.all_sprites, plant.rect.topleft, plant.image, LAYERS['main'])
                     self.soil_layer.grid[int(plant.rect.centery // TILE_SIZE)][int(plant.rect.centerx // TILE_SIZE)].remove('P')
     
+    def on_resize(self, new_width, new_height):
+        self.screen_width = new_width
+        self.screen_height = new_height
+        
+        # menu
+        self.menu.on_resize(self.screen_width, self.screen_height)     
+        
+        # sky
+        self.sky.on_resize(self.screen_width, self.screen_height)
+        
+        # transition
+        self.transition.on_resize(self.screen_width, self.screen_height)
+        
+        # overlay
+        self.overlay.on_resize(self.screen_width, self.screen_height)
+        
+        # camera
+        self.all_sprites.screen_width = self.screen_width        
+        self.all_sprites.screen_height = self.screen_height  
+    
     def run(self, dt, events):
         # drawing
         self.display_surface.fill('black')
@@ -163,14 +185,16 @@ class Level:
         # print(self.shop_active)
         
 class CameraGroup(pygame.sprite.Group):
-    def __init__(self, ):
+    def __init__(self, screen_width, screen_height):
         super().__init__()
         self.display_surface = pygame.display.get_surface()
         self.offset = pygame.math.Vector2()
+        self.screen_width = screen_width
+        self.screen_height = screen_height
         
     def draw(self, player):
-        self.offset.x = -(player.rect.centerx - SCREEN_WIDTH / 2)
-        self.offset.y = -(player.rect.centery - SCREEN_HEIGHT / 2)
+        self.offset.x = -(player.rect.centerx - self.screen_width / 2)
+        self.offset.y = -(player.rect.centery - self.screen_height / 2)
         for sprite in sorted(self.sprites(), key = lambda sprite: (sprite.z, sprite.rect.centery)):
             self.display_surface.blit(sprite.image, sprite.rect.topleft + self.offset)
             

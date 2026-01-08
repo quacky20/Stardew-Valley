@@ -2,13 +2,15 @@ from settings import *
 from gametimer import Timer
 
 class Menu:
-    def __init__(self, player, toggle_menu):
+    def __init__(self, player, toggle_menu, screen_width, screen_height):
         # general setup
         self.player = player
         self.toggle_menu = toggle_menu
         self.display_surface = pygame.display.get_surface()
         self.font = pygame.font.Font(join('font', 'LycheeSoda.ttf'), 30)
         self.timer = Timer(200)
+        self.screen_width = screen_width
+        self.screen_height = screen_height
         
         # options
         self.width = 400
@@ -26,7 +28,7 @@ class Menu:
         
     def display_money(self):
         text_surf = self.font.render(f'${self.player.money}', False, 'black')
-        text_rect = text_surf.get_frect(midbottom = (SCREEN_WIDTH / 2, SCREEN_HEIGHT - 20))
+        text_rect = text_surf.get_frect(midbottom = (self.screen_width / 2, self.screen_height - 20))
         
         pygame.draw.rect(self.display_surface, 'white', text_rect.inflate(15, 15), 0, 8)
         pygame.draw.rect(self.display_surface, 'black', text_rect.inflate(15, 15), 3, 8)
@@ -41,12 +43,17 @@ class Menu:
             self.total_height += text_surf.get_height() + (self.padding * 2)
             
         self.total_height += (len(self.text_surfs) - 1) * self.space
-        self.menu_top = SCREEN_HEIGHT / 2 - self.total_height / 2
-        self.main_rect = pygame.FRect(SCREEN_WIDTH / 2 - self.width / 2, self.menu_top, self.width, self.total_height)
+        self.menu_top = self.screen_height / 2 - self.total_height / 2
+        self.main_rect = pygame.FRect(self.screen_width / 2 - self.width / 2, self.menu_top, self.width, self.total_height)
         
         # buy or sell
         self.buy_text = self.font.render('Buy', False, 'black')
         self.sell_text = self.font.render('Sell', False, 'black')
+        
+    def on_resize(self, new_width, new_height):
+        self.screen_width = new_width
+        self.screen_height = new_height
+        self.setup()
         
     def input(self):
         keys = pygame.key.get_pressed()

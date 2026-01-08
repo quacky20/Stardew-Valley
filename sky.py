@@ -4,16 +4,23 @@ from sprites import Generic
 from random import randint, choice
 
 class Sky:
-    def __init__(self):
+    def __init__(self, screen_width, screen_height):
         self.display_surface = pygame.display.get_surface()
-        self.full_surf = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.start_color = [255, 255, 255]
         self.end_color = (38, 101, 189)
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        self.full_surf = pygame.Surface((self.screen_width, self.screen_height))
+        
+    def on_resize(self, new_width, new_height):
+        self.screen_width = new_width
+        self.screen_height = new_height
+        self.full_surf = pygame.Surface((self.screen_width, self.screen_height))
         
     def display(self, dt):
         for index, value in enumerate(self.end_color):
             if self.start_color[index] > value:
-                self.start_color[index] -= 2 * dt
+                self.start_color[index] -= dt
         self.full_surf.fill(self.start_color)
         self.display_surface.blit(self.full_surf, (0,0), special_flags = pygame.BLEND_RGBA_MULT)
 
