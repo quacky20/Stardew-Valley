@@ -8,7 +8,7 @@ from transition import Transition
 from soil import SoilLayer
 from sky import Rain, Sky
 from random import randint
-from menu import Menu
+from menu import Menu, Pause
 
 class Level:
     def __init__(self, screen_width, screen_height):
@@ -43,6 +43,10 @@ class Level:
         self.music = pygame.mixer.Sound(join('audio', 'music.mp3'))
         self.music.set_volume(0.3)
         self.music.play(loops = -1)
+        
+        # pause
+        self.pause_active = False
+        self.pause = Pause(self.toggle_pause, self.screen_width, self.screen_height)
             
     def setup(self):
         tmx_data = load_pygame(join('data', 'map.tmx'))
@@ -93,7 +97,7 @@ class Level:
         # player
         for obj in tmx_data.get_layer_by_name('Player'):
             if obj.name == 'Start':
-                self.player = Player(self.all_sprites, (obj.x, obj.y), self.collision_sprites, self.tree_sprites, self.interaction_sprites, self.soil_layer, self.toggle_shop)
+                self.player = Player(self.all_sprites, (obj.x, obj.y), self.collision_sprites, self.tree_sprites, self.interaction_sprites, self.soil_layer, self.toggle_shop, self.toggle_pause)
                 
             if obj.name == 'Bed':
                 Interaction(self.interaction_sprites, (obj.x, obj.y), (obj.width, obj.height), obj.name)
@@ -107,6 +111,9 @@ class Level:
     
     def toggle_shop(self):
         self.shop_active = not self.shop_active
+    
+    def toggle_pause(self):
+        self.pause_active = not self.pause_active
     
     def reset(self):
         # plants
@@ -165,6 +172,10 @@ class Level:
         # updates
         if self.shop_active:
             self.menu.update()
+            
+        elif self.pause_active:
+            self.pause.update()
+            
         else:
             self.all_sprites.update(dt, events)
             self.plant_collision()

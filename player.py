@@ -3,7 +3,7 @@ from support import *
 from gametimer import Timer
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, groups, pos, collision_sprites, tree_sprites, interaction_sprites, soil_layer, toggle_shop):
+    def __init__(self, groups, pos, collision_sprites, tree_sprites, interaction_sprites, soil_layer, toggle_shop, toggle_pause):
         super().__init__(groups)
         
         self.import_assets()
@@ -61,6 +61,7 @@ class Player(pygame.sprite.Sprite):
         self.sleep = False
         self.soil_layer = soil_layer
         self.toggle_shop = toggle_shop
+        self.toggle_pause = toggle_pause
         
         # sound
         self.watering_sound = pygame.mixer.Sound(join('audio', 'water.mp3'))
@@ -163,6 +164,9 @@ class Player(pygame.sprite.Sprite):
                     else:
                         self.status = 'left_idle'
                         self.sleep = True
+                        
+            if keys[pygame.K_ESCAPE]:
+                self.toggle_pause()
         
     def get_status(self):
         # idle
