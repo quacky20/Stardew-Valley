@@ -151,8 +151,17 @@ class Pause(GenericMenu):
                 self.index = (self.index - 1) % len(self.options)
                 self.timer.activate()
                 
-            # if keys[pygame.K_RETURN]:
-            #     self.use_option(self.options[self.index])
+            if keys[pygame.K_RETURN]:
+                self.use_option(self.options[self.index])
+            
+    def use_option(self, option):
+        if option == 'Resume':
+            self.toggle_menu()
+        elif option == 'Quit':
+            pygame.quit()
+            sys.exit()
+        else:
+            return
                 
     def setup(self):
         self.text_surfs = []
